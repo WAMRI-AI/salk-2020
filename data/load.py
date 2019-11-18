@@ -18,8 +18,7 @@ def get_src(data_pth, lr_dir, hr_dir):
     lr_tifs = data_pth/f'{lr_dir}'
 
     def map_to_hr(x):
-        hr_name = x.relative_to(lr_tifs)
-        return hr_tifs/hr_name
+        return Path(str(hr_dir/x.relative_to(lr_dir).with_suffix(".tif")).replace('lr', 'hr'))
     print(lr_tifs)
     src = (ImageImageList
             .from_folder(lr_tifs)
