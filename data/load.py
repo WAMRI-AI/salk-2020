@@ -30,7 +30,7 @@ def get_src(data_pth, lr_dir, hr_dir):
 
 def get_data(data_pth, lr_dir, hr_dir, bs, size,
              num_workers=4, noise=None, max_zoom=1.1):
-    src = get_src()
+    src = get_src(data_pth, lr_dir, hr_dir)
     tfms = get_transforms(flip_vert=True, max_zoom=max_zoom)
     data = (src
             .transform(tfms, size=size)
