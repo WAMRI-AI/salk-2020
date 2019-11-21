@@ -93,4 +93,126 @@ class UnetBlock(Module):
         return self.conv2(self.conv1(cat_x))
 ```
 
-## Image Transformations
+## Activation Function
+`defaults.activation=nn.ReLU`
+```python
+class ReLU(Module):
+    __constants__ = ['inplace']
+
+    def __init__(self, inplace=False):
+        super(ReLU, self).__init__()
+        self.inplace = inplace
+
+    def forward(self, input):
+        return F.relu(input, inplace=self.inplace)
+
+    def extra_repr(self):
+        inplace_str = 'inplace=True' if self.inplace else ''
+        return inplace_str
+```
+
+## Convolutional Layer
+```python
+#Cell
+class ConvLayer(nn.Sequential):
+    "Create a sequence of convolutional (`ni` to `nf`), ReLU (if `use_activ`) and `norm_type` layers."
+    def __init__(self, ni, nf, ks=3, stride=1, padding=None,
+                 bias=None, ndim=2, norm_type=NormType.Batch, bn_1st=True,
+                 act_cls=defaults.activation, transpose=False, init=nn.init.kaiming_normal_, xtra=None, **kwargs):
+        if padding is None: padding = ((ks-1)//2 if not transpose else 0)
+        bn = norm_type in (NormType.Batch, NormType.BatchZero)
+        if bias is None: bias = not bn
+        conv_func = _conv_func(ndim, transpose=transpose)
+        conv = init_default(conv_func(ni, nf, kernel_size=ks, bias=bias, stride=stride, padding=padding, **kwargs), init)
+        if   norm_type==NormType.Weight:   conv = weight_norm(conv)
+        elif norm_type==NormType.Spectral: conv = spectral_norm(conv)
+        layers = [conv]
+        act_bn = []
+        if act_cls is not None: act_bn.append(act_cls())
+        if bn: act_bn.append(BatchNorm(nf, norm_type=norm_type, ndim=ndim))
+        if bn_1st: act_bn.reverse()
+        layers += act_bn
+        if xtra: layers.append(xtra)
+        super().__init__(*layers)
+```
+
+## Self Attention
+
+```python
+#Cell
+class SelfAttention(nn.Module):
+    "Self attention layer for `n_channels`."
+    def __init__(self, n_channels):
+        super().__init__()
+        self.query,self.key,self.value = [self._conv(n_channels, c) for c in (n_channels//8,n_channels//8,n_channels)]
+        self.gamma = nn.Parameter(tensor([0.]))
+
+    def _conv(self,n_in,n_out):
+        return ConvLayer(n_in, n_out, ks=1, ndim=1, norm_type=NormType.Spectral, act_cls=None, bias=False)
+
+    def forward(self, x):
+        #Notation from the paper.
+        size = x.size()
+        x = x.view(*size[:2],-1)
+        f,g,h = self.query(x),self.key(x),self.value(x)
+        beta = F.softmax(torch.bmm(f.transpose(1,2), g), dim=1)
+        o = self.gamma * torch.bmm(h, beta) + x
+        return o.view(*size).contiguous()
+```
+
+## Pixel Shuffle ICNR
+
+```python
+#Cell
+class PixelShuffle_ICNR(nn.Sequential):
+    "Upsample by `scale` from `ni` filters to `nf` (default `ni`), using `nn.PixelShuffle`."
+    def __init__(self, ni, nf=None, scale=2, blur=False, norm_type=NormType.Weight, act_cls=defaults.activation):
+        super().__init__()
+        nf = ifnone(nf, ni)
+        layers = [ConvLayer(ni, nf*(scale**2), ks=1, norm_type=norm_type, act_cls=act_cls),
+                  nn.PixelShuffle(scale)]
+        layers[0][0].weight.data.copy_(icnr_init(layers[0][0].weight.data))
+        if blur: layers += [nn.ReplicationPad2d((1,0,1,0)), nn.AvgPool2d(2, stride=1)]
+        super().__init__(*layers)
+```
+
+## Batch Normalization
+
+```python
+#Cell
+def BatchNorm(nf, norm_type=NormType.Batch, ndim=2, **kwargs):
+    "BatchNorm layer with `nf` features and `ndim` initialized depending on `norm_type`."
+    assert 1 <= ndim <= 3
+    bn = getattr(nn, f"BatchNorm{ndim}d")(nf, **kwargs)
+    bn.bias.data.fill_(1e-3)
+    bn.weight.data.fill_(0. if norm_type==NormType.BatchZero else 1.)
+    return bn
+```
+
+## Hooks
+
+```python
+def hook_outputs(modules:Collection[nn.Module], detach:bool=True, grad:bool=False)->Hooks:
+    "Return `Hooks` that store activations of all `modules` in `self.stored`"
+    return Hooks(modules, _hook_inner, detach=detach, is_forward=not grad)
+```
+
+```python
+class Hooks():
+    "Create several hooks on the modules in `ms` with `hook_func`."
+    def __init__(self, ms:Collection[nn.Module], hook_func:HookFunc, is_forward:bool=True, detach:bool=True):
+        self.hooks = [Hook(m, hook_func, is_forward, detach) for m in ms]
+
+    def __getitem__(self,i:int)->Hook: return self.hooks[i]
+    def __len__(self)->int: return len(self.hooks)
+    def __iter__(self): return iter(self.hooks)
+    @property
+    def stored(self): return [o.stored for o in self]
+
+    def remove(self):
+        "Remove the hooks from the model."
+        for h in self.hooks: h.remove()
+
+    def __enter__(self, *args): return self
+    def __exit__ (self, *args): self.remove()
+```
