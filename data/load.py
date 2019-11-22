@@ -32,7 +32,7 @@ def get_data(data_pth, lr_dir, hr_dir, bs, size,
     src = get_src(data_pth, lr_dir, hr_dir)
     tfms = get_transforms(flip_vert=True, max_zoom=max_zoom)
     data = (src
-            .transform(tfms, size=size)
+            .transform(tfms, size=size, resize_method=ResizeMethod.CROP)
             .transform_y(tfms, size=size)
             .databunch(bs=bs, num_workers=num_workers)
             .normalize(imagenet_stats, do_y=True))
