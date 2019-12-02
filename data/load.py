@@ -27,13 +27,13 @@ def get_src(data_pth, lr_dir, hr_dir):
     return src
 
 
-def get_data(data_pth, lr_dir, hr_dir, bs, size,
+def get_data(data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
              num_workers=4, noise=None, max_zoom=1.1):
     src = get_src(data_pth, lr_dir, hr_dir)
     tfms = get_transforms(flip_vert=True, max_zoom=max_zoom)
     data = (src
-            .transform(tfms, size=size, resize_method=ResizeMethod.CROP)
-            .transform_y(tfms, size=size)
+            .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
+            .transform_y(tfms, size=out_sz, resize_method=ResizeMethod.CROP)
             .databunch(bs=bs, num_workers=num_workers)
             .normalize(imagenet_stats, do_y=True))
     data.c = 3
