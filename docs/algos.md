@@ -4,7 +4,8 @@
 ```python
 #Cell
 @delegates(Learner.__init__)
-def unet_learner(dbunch, arch, loss_func=None, pretrained=True, cut=None, splitter=None, config=None, **kwargs):
+def unet_learner(dbunch, arch, loss_func=None,
+                 pretrained=True, cut=None, splitter=None, config=None, **kwargs):
     "Build a unet learner from `dbunch` and `arch`"
     if config is None: config = {}
     meta = model_meta.get(arch, _default_meta)
@@ -22,7 +23,8 @@ def unet_learner(dbunch, arch, loss_func=None, pretrained=True, cut=None, splitt
 #Cell
 class DynamicUnet(SequentialEx):
     "Create a U-Net from a given architecture."
-    def __init__(self, encoder, n_classes, img_size, blur=False, blur_final=True, self_attention=False,
+    def __init__(self, encoder, n_classes, img_size,
+                 blur=False, blur_final=True, self_attention=False,
                  y_range=None, last_cross=True, bottle=False, act_cls=defaults.activation,
                  init=nn.init.kaiming_normal_, norm_type=NormType.Batch, **kwargs):
         imsize = img_size
@@ -58,7 +60,8 @@ class DynamicUnet(SequentialEx):
         layers += [ConvLayer(ni, n_classes, ks=1, act_cls=None, norm_type=norm_type, **kwargs)]
         apply_init(nn.Sequential(layers[3], layers[-2]), init)
         #apply_init(nn.Sequential(layers[2]), init)
-        if y_range is not None: layers.append(SigmoidRange(*y_range))
+        if y_range is not None:
+            layers.append(SigmoidRange(*y_range))
         super().__init__(*layers)
 
     def __del__(self):
@@ -71,15 +74,18 @@ class DynamicUnet(SequentialEx):
 class UnetBlock(Module):
     "A quasi-UNet block, using `PixelShuffle_ICNR upsampling`."
     @delegates(ConvLayer.__init__)
-    def __init__(self, up_in_c, x_in_c, hook, final_div=True, blur=False, act_cls=defaults.activation,
+    def __init__(self, up_in_c, x_in_c, hook, final_div=True,
+                 blur=False, act_cls=defaults.activation,
                  self_attention=False, init=nn.init.kaiming_normal_, norm_type=None, **kwargs):
         self.hook = hook
         self.shuf = PixelShuffle_ICNR(up_in_c, up_in_c//2, blur=blur, act_cls=act_cls, norm_type=norm_type)
         self.bn = BatchNorm(x_in_c)
         ni = up_in_c//2 + x_in_c
         nf = ni if final_div else ni//2
-        self.conv1 = ConvLayer(ni, nf, act_cls=act_cls, norm_type=norm_type, **kwargs)
-        self.conv2 = ConvLayer(nf, nf, act_cls=act_cls, norm_type=norm_type, xtra=SelfAttention(nf) if self_attention else None, **kwargs)
+        self.conv1 = ConvLayer(ni, nf, act_cls=act_cls,
+                               norm_type=norm_type, **kwargs)
+        self.conv2 = ConvLayer(nf, nf, act_cls=act_cls,
+                               norm_type=norm_type, xtra=SelfAttention(nf) if self_attention else None, **kwargs)
         self.relu = act_cls()
         apply_init(nn.Sequential(self.conv1, self.conv2), init)
 
@@ -88,7 +94,8 @@ class UnetBlock(Module):
         up_out = self.shuf(up_in)
         ssh = s.shape[-2:]
         if ssh != up_out.shape[-2:]:
-            up_out = F.interpolate(up_out, s.shape[-2:], mode='nearest')
+            up_out = F.interpolate(up_out, s.shape[-2:],
+                                   mode='nearest')
         cat_x = self.relu(torch.cat([up_out, self.bn(s)], dim=1))
         return self.conv2(self.conv1(cat_x))
 ```
@@ -148,7 +155,9 @@ class SelfAttention(nn.Module):
         self.gamma = nn.Parameter(tensor([0.]))
 
     def _conv(self,n_in,n_out):
-        return ConvLayer(n_in, n_out, ks=1, ndim=1, norm_type=NormType.Spectral, act_cls=None, bias=False)
+        return ConvLayer(n_in, n_out, ks=1, ndim=1,
+                         norm_type=NormType.Spectral,
+                         act_cls=None, bias=False)
 
     def forward(self, x):
         #Notation from the paper.
@@ -166,7 +175,9 @@ class SelfAttention(nn.Module):
 #Cell
 class PixelShuffle_ICNR(nn.Sequential):
     "Upsample by `scale` from `ni` filters to `nf` (default `ni`), using `nn.PixelShuffle`."
-    def __init__(self, ni, nf=None, scale=2, blur=False, norm_type=NormType.Weight, act_cls=defaults.activation):
+    def __init__(self, ni, nf=None, scale=2, blur=False,
+                 norm_type=NormType.Weight,
+                 act_cls=defaults.activation):
         super().__init__()
         nf = ifnone(nf, ni)
         layers = [ConvLayer(ni, nf*(scale**2), ks=1, norm_type=norm_type, act_cls=act_cls),
