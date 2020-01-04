@@ -34,6 +34,15 @@ def get_data(data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
     data.c = 3
     return data
 
+def get_test(lr_files, data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
+             num_workers=4, noise=None, max_zoom=1.):
+    src = get_src(data_pth, lr_dir, hr_dir)
+    data = (src
+            .add_test(lr_files)
+            .databunch(bs=bs, num_workers=num_workers)
+            .normalize(imagenet_stats, do_y=True))
+    data.c = 3
+    return data
 
 def get_src(data_pth, lr_dir, hr_dir):
     hr_tifs = data_pth/f'{hr_dir}'
