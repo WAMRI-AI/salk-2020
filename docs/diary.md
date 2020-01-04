@@ -25,3 +25,12 @@ Furthermore, the trained PSSR model generates predicted images that have 3 chann
 ```python
 plt.imshow(tensor[0])
 ```
+
+Similar to SVD crappification, a PSSR process function has been defined to generate pssr-crappified images of the original HR images. Due to the details of the trained PSSR model, the generated images were only 512x512 in size. This should be modified in the future to allow trained PSSR model to generate 600x900 images, or even images of arbitrary size at a consistent quality and resolution.
+
+# Images Of Interest
+
+Although it is important to acknowledge that the EM dataset consists of 99997 images of 600x900 size each. Thus, performance of any model on any task based on the dataset should primarily be assessed in terms of quantitative evaluation metrics, such as PSNR and SSIM. However, perhaps due to the inherent biases of humans to judge difference in performances based on only a few key samples, we keep a list of images to note differences between the original PSSR model and any newer versions. Such assessments should be particularly focused on the domain-specific features of the generated images i.e. identifying vesicles, etc.
+
+Please find indexes of such key images (sorted from original 99997 images) below:
+- 3500
