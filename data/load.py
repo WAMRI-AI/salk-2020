@@ -22,16 +22,23 @@ def get_data(data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
             .transform_y(tfms, size=out_sz, resize_method=ResizeMethod.CROP)
             .databunch(bs=bs, num_workers=num_workers)
             .normalize(imagenet_stats, do_y=True))
-    if subsample:
-        trn_size = len(data.train_ds)
-        trn_indices = np.random.choice(np.arange(trn_size), size=int(subsample*trn_size), replace=False)
-        trn_sampler = torch.utils.data.sampler.SubsetRandomSampler(trn_indices)
-        val_size = len(data.valid_ds)
-        val_indices = np.random.choice(np.arange(val_size), size=int(subsample*val_size), replace=False)
-        val_sampler = torch.utils.data.sampler.SubsetRandomSampler(val_indices)
-        data.train_dl = data.train_dl.new(shuffle=False, sampler=trn_sampler)
-        data.valid_dl = data.valid_dl.new(shuffle=False, sampler=val_sampler)
     data.c = 3
+    return data
+
+def subsample(data, pct=0.1):
+    """Takes a databunch as input and returns a mini-version of the dataset
+    This is useful for debugging and rapid experimentation. 
+    data -> a databunch object
+    pct  -> the fraction of original dataset size (default: 0.2)"""
+    trn_size = len(data.train_ds)
+    trn_indices = np.random.choice(np.arange(trn_size), 
+                                   size=int(pct*trn_size), replace=False)
+    trn_sampler = torch.utils.data.sampler.SubsetRandomSampler(trn_indices)
+    val_size = len(data.valid_ds)
+    val_indices = np.random.choice(np.arange(val_size), size=int(pct*val_size), replace=False)
+    val_sampler = torch.utils.data.sampler.SubsetRandomSampler(val_indices)
+    data.train_dl = data.train_dl.new(shuffle=False, sampler=trn_sampler)
+    data.valid_dl = data.valid_dl.new(shuffle=False, sampler=val_sampler)
     return data
 
 def get_test(lr_files, data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
