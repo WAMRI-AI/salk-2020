@@ -29,7 +29,7 @@ def subsample(data, pct=0.1):
     """Takes a databunch as input and returns a mini-version of the dataset
     This is useful for debugging and rapid experimentation. 
     data -> a databunch object
-    pct  -> the fraction of original dataset size (default: 0.2)"""
+    pct  -> the fraction of original dataset size (default: 0.1)"""
     trn_size = len(data.train_ds)
     trn_indices = np.random.choice(np.arange(trn_size), 
                                    size=int(pct*trn_size), replace=False)
