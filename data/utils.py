@@ -29,8 +29,8 @@ def bilinear_upsample(img, scale=4):
     img_upsampled = scipy.ndimage.zoom(np.squeeze(img), 4, order=1)
     return np.expand_dims(img_upsampled, axis=0)
 
-def _custom_cutout(x, min_n_holes:faiv.uniform_int=5, max_n_holes:faiv.uniform_int=10,
-                   min_length:faiv.uniform_int=5, max_length:faiv.uniform_int=15):
+def _custom_cutout(x, min_n_holes=5, max_n_holes=10,
+                   min_length=5, max_length=15):
     "Cut out `n_holes` number of square holes of size `length` in image at random locations."
     h,w = x.shape[1:]
     n_holes = np.random.randint(min_n_holes, max_n_holes)
