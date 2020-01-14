@@ -14,16 +14,49 @@ Usage: bs = 8
 
 
 def get_data(data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
-             num_workers=4, noise=None, max_zoom=1.1, subsample=None):
+             tfms=None, num_workers=4, noise=None, max_zoom=1.1):
     src = get_src(data_pth, lr_dir, hr_dir)
-    tfms = get_transforms(flip_vert=True, max_zoom=max_zoom)
-    data = (src
-            .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
-            .transform_y(tfms, size=out_sz, resize_method=ResizeMethod.CROP)
-            .databunch(bs=bs, num_workers=num_workers)
-            .normalize(imagenet_stats, do_y=True))
+    if not tfms: 
+        tfms = get_transforms(flip_vert=True, max_zoom=max_zoom)
+        data = (src
+                .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
+                .transform_y(tfms, size=out_sz, resize_method=ResizeMethod.CROP)
+                .databunch(bs=bs, num_workers=num_workers)
+                .normalize(imagenet_stats, do_y=True))
+    else: 
+        data = (src
+                .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
+                .transform_y(None, size=out_sz, resize_method=ResizeMethod.CROP)
+                .databunch(bs=bs, num_workers=num_workers)
+                .normalize(imagenet_stats, do_y=True))
     data.c = 3
     return data
+
+def get_patched_data(data_pth, hr_dir, bs, in_sz, out_sz,
+                     tfms=None, num_workers=4, noise=None, max_zoom=1.1):
+    src = get_patched_src(data_pth, hr_dir)
+    
+    data = (src
+                .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
+                .transform_y(None, size=out_sz, resize_method=ResizeMethod.CROP)
+                .databunch(bs=bs, num_workers=num_workers)
+                .normalize(imagenet_stats, do_y=True))
+    data.c = 3
+    data.train_ds.tfms_y = None
+    return data
+
+
+def get_patched_src(data_pth, hr_dir):
+    hr_tifs = data_pth/f'{hr_dir}'
+
+    def map_to_hr(x):
+        return hr_tifs/x.relative_to(hr_tifs).with_suffix(".tif")
+
+    src = (ImageImageList
+            .from_folder(hr_tifs)
+            .split_by_rand_pct()
+            .label_from_func(map_to_hr))
+    return src
 
 def subsample(data, pct=0.1):
     """Takes a databunch as input and returns a mini-version of the dataset
