@@ -37,12 +37,13 @@ def get_patched_data(data_pth, hr_dir, bs, in_sz, out_sz,
     src = get_patched_src(data_pth, hr_dir)
     
     data = (src
-                .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
+                .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP, tfm_y=False)
                 .transform_y(None, size=out_sz, resize_method=ResizeMethod.CROP)
                 .databunch(bs=bs, num_workers=num_workers)
                 .normalize(imagenet_stats, do_y=True))
     data.c = 3
     data.train_ds.tfms_y = None
+    data.valid_ds.tfms_y = None
     return data
 
 
