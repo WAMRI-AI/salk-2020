@@ -34,9 +34,9 @@ def _custom_cutout(x, min_n_holes:faiv.uniform_int=5, max_n_holes:faiv.uniform_i
     "Cut out `n_holes` number of square holes of size `length` in image at random locations."
     h,w = x.shape[1:]
     n_holes = np.random.randint(min_n_holes, max_n_holes)
-    h_length = np.random.randint(min_length, max_length)
-    w_length = np.random.randint(min_length, max_length)
     for n in range(n_holes):
+        h_length = np.random.randint(min_length, max_length)
+        w_length = np.random.randint(min_length, max_length)
         h_y = np.random.randint(0, h)
         h_x = np.random.randint(0, w)
         y1 = int(np.clip(h_y - h_length / 2, 0, h))
