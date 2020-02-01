@@ -61,3 +61,13 @@ This is an initial experiment as part of the Feature Loss study. This involves f
 - model path: '/home/alaa/Dropbox/BPHO Staff/USF/EM/models/baselines/feature_loss_baseline'
 - training: freeze (1 cycle, 1e-3 learning rate), unfreeze (2 cycles, slice(1e-5,1e-3))
 - results: PSNR val 11.81, 11.85, 11.88
+
+## 3D Critic model
+
+- notebook: 3D_nextSlice.ipynb
+- dataset: 3D data from Lyndsey's, specifically only 2 folders: FPNCT & FWNGV (the other has different size). Each big image is chopped up to form smaller volumes (see lab/judge/data/dataprep_lyndsey.ipynb). Processed data saved in dropbox: (Lyndsey)/cropped_all. 
+- task: Predicting the next slice based on the current slice
+- model: U-net
+- model path: '/home/alaa/Dropbox/BPHO Staff/USF/EM/models/critics/3D_critic'
+- training: unfrozen (see notebook for details)
+- results: not efficient. need matching data that has thin layers
