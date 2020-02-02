@@ -59,11 +59,12 @@ def get_patched_src(data_pth, hr_dir):
             .label_from_func(map_to_hr))
     return src
 
-def subsample(data, pct=0.1):
+def subsample(data, pct=0.1, seed=None):
     """Takes a databunch as input and returns a mini-version of the dataset
     This is useful for debugging and rapid experimentation. 
     data -> a databunch object
     pct  -> the fraction of original dataset size (default: 0.1)"""
+    if seed: np.random.seed(seed)
     trn_size = len(data.train_ds)
     trn_indices = np.random.choice(np.arange(trn_size), 
                                    size=int(pct*trn_size), replace=False)
@@ -71,9 +72,10 @@ def subsample(data, pct=0.1):
     val_size = len(data.valid_ds)
     val_indices = np.random.choice(np.arange(val_size), size=int(pct*val_size), replace=False)
     val_sampler = torch.utils.data.sampler.SubsetRandomSampler(val_indices)
-    data.train_dl = data.train_dl.new(shuffle=False, sampler=trn_sampler)
-    data.valid_dl = data.valid_dl.new(shuffle=False, sampler=val_sampler)
-    return data
+    mini_data = copy(data)
+    mini_data.train_dl = mini_data.train_dl.new(shuffle=False, sampler=trn_sampler)
+    mini_data.valid_dl = mini_data.valid_dl.new(shuffle=False, sampler=val_sampler)
+    return mini_data
 
 def get_test(lr_files, data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
              num_workers=4, noise=None, max_zoom=1.):
