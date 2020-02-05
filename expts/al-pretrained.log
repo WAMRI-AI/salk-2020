@@ -1,0 +1,23 @@
+/home/alaa/Dropbox (BPHO)/BPHO Staff/USF/EM/training/trainsets/crappified
+/home/alaa/Dropbox (BPHO)/BPHO Staff/USF/EM/training/trainsets/crappified
+/home/alaa/Dropbox (BPHO)/BPHO Staff/USF/EM/training/trainsets/crappified
+epoch     train_loss  valid_loss  mse_loss  ssim      psnr      time    
+0         0.038986    0.035236    0.035236  0.671894  14.532275 12:38     
+epoch     train_loss  valid_loss  mse_loss  ssim      psnr      time    
+0         0.037709    0.033246    0.033246  0.683172  14.784821 10:09     
+epoch     train_loss  valid_loss  mse_loss  ssim      psnr      time    
+0         0.047366    0.042223    0.042223  0.481807  13.752377 24:34     
+1         0.047528    0.041499    0.041499  0.494439  13.827518 24:31     
+2         0.047398    0.040879    0.040879  0.499161  13.892990 24:27     
+epoch     train_loss  valid_loss  mse_loss  ssim      psnr      time    
+0         0.046886    0.040871    0.040871  0.502094  13.893668 26:12     
+1         0.047131    0.041036    0.041036  0.495643  13.876251 26:15     
+2         0.046099    0.040557    0.040557  0.500884  13.927337 26:12     
+epoch     train_loss  valid_loss  mse_loss  ssim      psnr      time    
+0         0.053375    0.052427    0.052427  0.284284  12.821198 1:37:33   
+1         0.052446    0.052341    0.052341  0.289682  12.828356 1:37:16   
+2         0.052590    0.051941    0.051941  0.292569  12.861573 1:37:13   
+epoch     train_loss  valid_loss  mse_loss  ssim      psnr      time    
+0         0.051762    0.051914    0.051914  0.292866  12.863848 1:42:12   
+1         0.053035    0.052133    0.052133  0.288992  12.845653 1:42:14   
+2         0.052681    0.051766    0.051766  0.292900  12.876197 1:42:37   
