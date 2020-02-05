@@ -14,21 +14,14 @@ Usage: bs = 8
 
 
 def get_data(data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
-             tfms=None, num_workers=4, noise=None, max_zoom=1.1):
+             num_workers=4, noise=None, max_zoom=1.1):
     src = get_src(data_pth, lr_dir, hr_dir)
-    if not tfms: 
-        tfms = get_transforms(flip_vert=True, max_zoom=max_zoom)
-        data = (src
-                .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
-                .transform_y(tfms, size=out_sz, resize_method=ResizeMethod.CROP)
-                .databunch(bs=bs, num_workers=num_workers)
-                .normalize(imagenet_stats, do_y=True))
-    else: 
-        data = (src
-                .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
-                .transform_y(None, size=out_sz, resize_method=ResizeMethod.CROP)
-                .databunch(bs=bs, num_workers=num_workers)
-                .normalize(imagenet_stats, do_y=True))
+    tfms = get_transforms(flip_vert=True, max_zoom=max_zoom)
+    data = (src
+            .transform(tfms, size=in_sz, resize_method=ResizeMethod.CROP)
+            .transform_y(tfms, size=out_sz, resize_method=ResizeMethod.CROP)
+            .databunch(bs=bs, num_workers=num_workers)
+            .normalize(imagenet_stats, do_y=True))
     data.c = 3
     return data
 
@@ -87,7 +80,7 @@ def get_test(lr_files, data_pth, lr_dir, hr_dir, bs, in_sz, out_sz,
     data.c = 3
     return data
 
-def get_src(data_pth, lr_dir, hr_dir):
+def get_src(data_pth, lr_dir, hr_dir, seed=49):
     hr_tifs = data_pth/f'{hr_dir}'
     lr_tifs = data_pth/f'{lr_dir}'
 
@@ -96,6 +89,6 @@ def get_src(data_pth, lr_dir, hr_dir):
 
     src = (ImageImageList
             .from_folder(lr_tifs)
-            .split_by_rand_pct()
+            .split_by_rand_pct(seed=seed)
             .label_from_func(map_to_hr))
     return src
