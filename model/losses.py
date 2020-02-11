@@ -26,6 +26,7 @@ def gram_matrix(x):
 class FeatureLoss(nn.Module):
     def __init__(self, m_feat, layer_ids, layer_wgts):
         super().__init__()
+        self.__name__ = 'feat_loss'
         self.m_feat = m_feat
         self.loss_features = self.make_layers(layer_ids)
         self.hooks = hook_outputs(self.loss_features, detach=False)
@@ -53,17 +54,17 @@ class FeatureLoss(nn.Module):
         self.m_feat(x)
         return [(o.clone() if clone else o) for o in self.hooks.stored]
     
-    def forward(self, input, target):
+    def forward(self, pred, target):
         out_feat = self.make_features(target, clone=True)
-        in_feat = self.make_features(input)
-        self.feat_losses = [base_loss(input,target)]
+        in_feat = self.make_features(pred)
+        self.feat_losses = [base_loss(pred,target)]
         self.feat_losses += [base_loss(f_in, f_out)*w
                              for f_in, f_out, w in zip(in_feat, out_feat, self.wgts)]
         self.feat_losses += [base_loss(gram_matrix(f_in), gram_matrix(f_out))*w**2 * 5e3
                              for f_in, f_out, w in zip(in_feat, out_feat, self.wgts)]
         self.metrics = dict(zip(self.metric_names, self.feat_losses))
         return sum(self.feat_losses)
-    
+
     def __del__(self): self.hooks.remove()
 
 
@@ -202,3 +203,13 @@ def ssim_loss(img1, img2, window_size = 11, size_average = True):
     window = window.type_as(img1)
     
     return -1.*_ssim(img1, img2, window, window_size, channel, size_average)
+
+def ssim_log_loss(img1, img2, window_size = 11, size_average = True):
+    (_, channel, _, _) = img1.size()
+    window = create_window(window_size, channel)
+    
+    if img1.is_cuda:
+        window = window.cuda(img1.get_device())
+    window = window.type_as(img1)
+    
+    return -1.*torch.log(_ssim(img1, img2, window, window_size, channel, size_average))
