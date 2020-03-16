@@ -1,3 +1,5 @@
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
+
 # Methods
 The following should contain information about the methods used in our experiments as part of the Salk-WAMRI practicum 2019-2020. 
 
