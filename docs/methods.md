@@ -13,19 +13,19 @@ where $y$ and $\hat{y}$ denote the target and predicted images, respectively; $m
 ### Structural Similarity Index
 The structural similarity index (SSIM) is a perceptual quality assessment measure between two images based on the degradation of structural information. SSIM compares local patterns of pixel intesnities that are normalized for luminance and contrast [1]. This metric can be expressed as:
 
+
 ![SSIM](figs/ssim_diagram.png)
+
 
 In our work, we use the negative logarithm of SSIM (NLSSIM) as a loss function. Results showed that applying the negative logarithm allowed improved model convergence, better error-value interpretability, and greater usability in combined loss functions (discussed later). 
 
 ### Feature Loss
 The feature loss is another perceptual loss function that uses a secondary neural network model, hereafter be known as a critic, to compute the error between the target and predicted images. This was first introduced in [2] where the critic was a neural network that was trained on the imagenet classification task. In our work, we use a critic that is trained on an in-painting pretext task using self-supervised learning. We later show that using the latter critic for feature loss leads to improved performance of the PSSR (denoising) model when compared to a critic that is just trained on the imagenet classification task. 
 
+
 More specifically, we train a U-Net on the in-painting task. Afterwards we use the encoder part of the U-Net (ResNet34) as our critic model for feature loss (see diagram below).
 
-
-
-
-
+![FEAT](figs/featloss.png)
 
 
 
