@@ -49,9 +49,9 @@ def save_stats(stats, save_dir):
     csvFile.close() 
 
 def slice_process(x1, x2, y):
-    if len(x1.shape) == 3: x1 = x1[0,:,:]
-    if len(x2.shape) == 3: x2 = x2[0,:,:]
-    if len(y.shape) == 3: y = y[0,:,:]
+    if len(x1.shape) == 3: x1 = x1[:,:,0]
+    if len(x2.shape) == 3: x2 = x2[:,:,0]
+    if len(y.shape) == 3: y = y[:,:,0]
 
     # a scaled and shifted version of pred and bilinear
     x1 = 2*x1 + 100
@@ -113,12 +113,12 @@ def stack_process(pred, bilinear, gt, offset_frames=0):
     #tifffile.imsave(str(exp_dir/f"{stem}_bilinearnorm.tif"), np.stack(x2_norms).astype(np.float32))
     return stack_name, stack_psnr,stack_ssim,stack_lpsnr,stack_lssim
 
-def metric_gen(predset, testset, stats_dir, offset_frames):
-    save_dir = Path('stats/csv')/f'stats_{testset}_{predset}.csv'
+def metric_gen(predset, testset, bilinset, offset_frames):
+    save_dir = f'stats.csv'
 
-    pred_dir = stats_dir/f'output/{testset}/{predset}'
-    bilinear_dir = stats_dir/f'bilinear/{testset}'
-    gt_dir = stats_dir/f'ground_truth/{testset}'
+    pred_dir = Path(predset)
+    bilinear_dir = Path(bilinset)
+    gt_dir = Path(testset)
 
     pred_list = list(pred_dir.glob(f'*.tif'))
     bilinear_list = list(bilinear_dir.glob(f'*.tif'))
@@ -152,13 +152,15 @@ def metric_gen(predset, testset, stats_dir, offset_frames):
 if __name__ == '__main__':
     np.random.seed(32)
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-e', '--experiment', type = str, default = "semisynth_mito")
-    parser.add_argument('-p', '--predset', type = str, default = "single_100mito_best_512")
+    parser.add_argument('-e', '--experiment', type = str, default = "/home/alaa/Dropbox/BPHO Staff/USF/EM/testing/HR/real-world_SEM/")
+    parser.add_argument('-p', '--predset', type = str, default = "/home/alaa/Dropbox/BPHO Staff/USF/EM/testing/emsynth_005_unet/real-world_SEM/")
+    parser.add_argument('-b', '--bilinset', type = str, default = "/home/alaa/Dropbox/BPHO Staff/USF/EM/testing/LR-Bilinear/real-world_SEM/")
     args = parser.parse_args()
-
+    
     predset = args.predset
     testset = args.experiment
-    stats_dir = Path('stats/')
+    bilinset = args.bilinset
+#     stats_dir = Path('stats/')
     offset_frames = 2 if 'multi' in predset else 0
-    metric_gen(predset, testset, stats_dir, offset_frames)
+    metric_gen(predset, testset, bilinset, offset_frames)
 
