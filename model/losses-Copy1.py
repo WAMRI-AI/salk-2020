@@ -23,49 +23,32 @@ def gram_matrix(x):
     return (x @ x.transpose(1,2))/(c*h*w)
 
 ### Feature Loss 
-def flatten_model(model):
-    """Using children() method, flatten a complex model."""
-    flattened = []
-
-    def get_children(block):
-        for child in list(block.children()):
-            grand_children = list(child.children())
-            if len(grand_children):
-                get_children(child)
-            else: flattened.append(child)
-    
-    get_children(model)
-    return flattened
-
-def find_layers(flattened_model):
-    """Find the layers previous to the grid-changing layers in a flattened model."""
-    
-    def is_grid_changing(layer):
-        """add controls here"""
-        if 'pooling' in str(type(layer)): return True
-        if isinstance(layer, torch.nn.modules.conv.Conv2d) and layer.stride==(2,2):
-            return True
-    
-    loss_features = []
-    for i, layer in enumerate(flattened_model[1:]):
-        if is_grid_changing(layer):
-            loss_features.append(flattened_model[i]) 
-            # append the layer previous to the grid-changing ones
-            # want to see the grid-changing ones? add the index by 1
-            # loss_features.append(flattened_model[i+1]) 
-    return loss_features
-
 class FeatureLoss(nn.Module):
-    def __init__(self, m_feat, layer_wgts):
+    def __init__(self, m_feat, layer_ids, layer_wgts):
         super().__init__()
         self.__name__ = 'feat_loss'
         self.m_feat = m_feat
-        self.loss_features = find_layers(flatten_model(self.m_feat))
+        self.loss_features = self.make_layers(layer_ids)
         self.hooks = hook_outputs(self.loss_features, detach=False)
         self.wgts = layer_wgts
-        self.metric_names = ['pixel',] + [
-            f'feat_{i}' for i in range(len(self.loss_features))
-              ] + [f'gram_{i}' for i in range(len(self.loss_features))]
+        self.metric_names = ['pixel',] + [f'feat_{i}' for i in range(len(layer_ids))
+              ] + [f'gram_{i}' for i in range(len(layer_ids))]
+
+    def make_layers(self, layer_ids):
+        loss_features = []
+        for layer in layer_ids:
+            obj = self.m_feat
+            for i in layer:
+                try:
+                    obj = obj[i]
+                except TypeError:
+                    children = list(obj.children())
+                    if len(children):
+                        obj = children[i]
+                    else:
+                        break
+            loss_features.append(obj)
+        return loss_features
     
     def make_features(self, x, clone=False):
         self.m_feat(x)
@@ -83,6 +66,49 @@ class FeatureLoss(nn.Module):
         return sum(self.feat_losses)
 
     def __del__(self): self.hooks.remove()
+
+
+def grab_resnet_layers(resnet):
+    """returns layers that have Conv2D with stride = 2 and indices
+    of layers just before each of them (if one exists)"""
+    layers, layer_ind = pooling_layer(resnet)
+    act_blocks = previous_layer(layer_ind)
+    return layers, act_blocks
+
+def next_ind(cur_ind, i):
+    ind = cur_ind.copy()
+    ind.append(i)
+    return ind
+
+def pooling_layer(block, cur_ind=[]):
+    """cur_ind: the index of Sequential or BasicBlock that the 
+    code is looking into"""
+    returned_block = []
+    returned_index = []
+
+    for i, k in enumerate(block):
+        if isinstance(k, (torch.nn.modules.container.Sequential, torchvision.models.resnet.BasicBlock)):
+            new_block, new_index = pooling_layer(k.children(), next_ind(cur_ind, i))
+            returned_block.extend(new_block)
+            returned_index.extend(new_index)
+        elif isinstance(k, torch.nn.modules.conv.Conv2d) and k.stride==(2,2):
+            returned_block.append(k)
+            returned_index.append(next_ind(cur_ind, i))
+    return returned_block, returned_index
+
+def previous_layer(layer_ind):
+    prev_layer_list = []
+    for ind in layer_ind:
+        if not sum(ind):
+            continue
+        prev_layer = ind.copy()
+        prev_layer[-1] -= 1
+        if prev_layer[-1] == -1:
+            for i in list(range(len(prev_layer)))[::-1]:
+                if prev_layer[i] == -1:
+                    prev_layer[i-1] -= 1
+        prev_layer_list.append(prev_layer)
+    return prev_layer_list
 
 
 ### MSE Loss with Sharpness Regularization
