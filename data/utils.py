@@ -10,6 +10,12 @@ def load_img(img_filename):
     img_mat = img.get_tiff_array()[0].astype(np.float32)[np.newaxis, :]
     return img_mat
 
+def load_img_uint8(img_filename):
+    """Loads input image into matrix using filename"""
+    img = libtiff.TiffFile(img_filename)
+    img_mat = img.get_tiff_array()[0].astype(np.uint8)[np.newaxis, :]
+    return img_mat
+
 def save_img(img, filepath, format="tiff"):
     """Saves input matrix into image file using filepath"""
     img = img_to_uint8(img)

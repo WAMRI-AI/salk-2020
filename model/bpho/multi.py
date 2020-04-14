@@ -2,7 +2,7 @@ from numbers import Integral
 from fastai import *
 from fastai.vision import *
 
-__all__ = ['MultiImage', 'MultiImageImageList', 'MultiImageDataBunch', 'NpyRawImageList']
+__all__ = ['MultiImage', 'MultiImageList', 'MultiImageImageList', 'MultiImageDataBunch', 'NpyRawImageList']
 
 
 class MultiImage(ItemBase):
@@ -114,8 +114,9 @@ class MultiImageDataBunch(ImageDataBunch):
         "Add normalize transform using `stats` (defaults to `DataBunch.batch_stats`)"
         if getattr(self, 'norm', False):
             raise Exception('Can not call normalize twice')
-        if stats is None: self.stats = self.batch_stats()
-        else: self.stats = stats
+#         if stats is None: self.stats = self.batch_stats()
+#         else: self.stats = stats
+        self.stats = [0.0893, 0.1058]
         self.norm, self.denorm = multi_normalize_funcs(*self.stats,
                                                        do_x=do_x,
                                                        do_y=do_y)
@@ -134,7 +135,7 @@ class MultiImageList(ImageList):
 
     def open(self, fn):
         img_data = np.load(fn)
-        if img_data.dtype == np.uint8:
+        if img_data.dtype == np.uint8 or img_data.dtype == np.float64:
             img_data = img_data.astype(np.float32) / 255.0
         img_list = []
         if len(img_data.shape) == 4:

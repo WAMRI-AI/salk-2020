@@ -6,16 +6,16 @@ from fastai.vision import *
 from fastai.callbacks import *
 from torchvision.models.resnet import BasicBlock, conv1x1
 
-def greyscale_resnet34():
-    """Creates a greyscale resnet"""
-    return GreyscaleResNet(BasicBlock, [3, 4, 6, 3])
+def custom_resnet34(c_in=3):
+    """Customizes the number of input channels of resnet34"""
+    return CustomResNet(c_in, BasicBlock, [3, 4, 6, 3])
 
-class GreyscaleResNet(nn.Module):
+class CustomResNet(nn.Module):
     """Assgin only one channel to the first layer of ResNet"""
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
+    def __init__(self, c_in, block, layers, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
-        super(GreyscaleResNet, self).__init__()
+        super(CustomResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
@@ -31,7 +31,7 @@ class GreyscaleResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=7, stride=2, padding=3,
+        self.conv1 = nn.Conv2d(c_in, self.inplanes, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
