@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 class DataLoader(Dataset):
     def __init__(self, data_pth):
-        self.img_list = list(data_pth.glob('*.tif'))
+        self.img_list = data_pth.values.squeeze().tolist()
 
         self.permutations = self.__retrive_permutations()
 
