@@ -42,7 +42,7 @@ class Network(nn.Module):
         self.classifier = nn.Sequential()
         self.classifier.add_module('fc8',nn.Linear(4096, classes))
         
-        #self.apply(weights_init)
+        self.apply(weights_init)
 
     def load(self,checkpoint):
         model_dict = self.state_dict()
