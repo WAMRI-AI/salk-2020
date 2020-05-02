@@ -8,11 +8,13 @@ from fastai.callback import annealing_exp, Scheduler
 
 def get_pssr_transforms(size=(256,256), config=None):
     tfms = {}
-    tfms['x'] = transforms.Compose([ToGrayScale(3), 
+    if not config:
+        config = {'y_channel': 1, 'x_channel': 3}
+    tfms['x'] = transforms.Compose([ToGrayScale(config['x_channel']), 
                                     transforms.Resize((600,900)),
                                     transforms.CenterCrop(size),
                                     transforms.ToTensor()])
-    tfms['y'] = transforms.Compose([ToGrayScale(), 
+    tfms['y'] = transforms.Compose([ToGrayScale(config['y_channel']), 
                                     transforms.CenterCrop(size),
                                     transforms.ToTensor()])
     return tfms
