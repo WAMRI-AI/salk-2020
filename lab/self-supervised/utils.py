@@ -6,13 +6,17 @@ import math
 from fastprogress.fastprogress import progress_bar
 from fastai.callback import annealing_exp, Scheduler
 
-def get_pssr_transforms(size=(256,256), config=None):
+
+def get_pssr_transforms(size=256, config=None):
     tfms = {}
-    tfms['x'] = transforms.Compose([ToGrayScale(3), 
-                                    transforms.Resize((600,900)),
+    if not config:
+        config = {'y_channel': 1, 'x_channel': 3}
+    tfms['x'] = transforms.Compose([ToGrayScale(config['x_channel']), 
+                                    transforms.Resize((size, int(size*1.5))),
                                     transforms.CenterCrop(size),
                                     transforms.ToTensor()])
-    tfms['y'] = transforms.Compose([ToGrayScale(), 
+    tfms['y'] = transforms.Compose([ToGrayScale(config['y_channel']), 
+                                    transforms.Resize((size, int(size*1.5))),
                                     transforms.CenterCrop(size),
                                     transforms.ToTensor()])
     return tfms
@@ -54,7 +58,7 @@ def show_result(x, y, pred, figsize=(20,20)):
     axarr[0].set_title('Input')
     axarr[1].imshow(y.permute(1,2,0).squeeze(), cmap=plt.cm.gray) # visualize image tensor
     axarr[1].set_title('Target')
-    axarr[2].imshow(pred.permute(3,2,0,1).squeeze(), cmap=plt.cm.gray) # visualize image tensor
+    axarr[2].imshow(pred[0].permute(1,2,0).squeeze(), cmap=plt.cm.gray) # visualize image tensor
     axarr[2].set_title('Prediction')
     
 def find_lr(model, trn_loader, optimizer, loss_function, init_value = 1e-8, final_value=10., beta = 0.98):
