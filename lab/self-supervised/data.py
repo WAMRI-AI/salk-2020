@@ -14,10 +14,10 @@ class EMPSSR(Dataset):
     See get_selfplay_transforms() in utils.py for an example definition.
     """
 
-    def __init__(self, target_pth, c=3, transforms=None):
+    def __init__(self, target_pth, transforms=None):
         self.target_img_filepaths = np.squeeze(target_pth).tolist()
         self.transforms = transforms
-        self.c = c
+        self.c = int(str(transforms['y']).split()[1][-2])
 
     def __len__(self):
         return len(self.target_img_filepaths)

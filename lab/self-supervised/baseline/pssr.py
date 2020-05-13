@@ -1,3 +1,12 @@
+# training param
+train_date = '5.4'
+gpu_id = 2
+sample = False
+pretrained = True
+import torch.nn.functional as F
+loss_function = F.mse_loss
+config = {'y_channel': 3, 'x_channel': 3}
+
 from enum import Enum
 from pathlib import Path
 import sys
@@ -13,7 +22,7 @@ from model import DynamicUnet
 
 import torch
 from torch import nn
-import torch.nn.functional as F
+
 from torch.utils.data import Dataset, DataLoader
 from torchvision import models, transforms
 from PIL import Image
@@ -21,13 +30,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# training param
-train_date = '4.30'
-gpu_id = 3
-sample = False
-pretrained = True
-loss_function = F.mse_loss
-config = {'y_channel': 3, 'x_channel': 3}
 
 def get_lrs(dataloader, max_lr=1e-3, min_lr=None, max_mom=0.95):
     """This function returns arrays for learning rates and momentum
