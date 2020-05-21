@@ -1,20 +1,32 @@
+__all__ = ['DataLoader']
+
 import numpy as np
+import pandas as pd
+from itertools import permutations
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from PIL import Image
+from pathlib import Path
+# train_set = pd.read_csv('../train.csv')
+# valid_set = pd.read_csv('../valid.csv')
+# data_pth = Path('/home/alaa/Dropbox/BPHO Staff/USF/EM/training/trainsets/hr/')
+
 class DataLoader(Dataset):
-    def __init__(self, data_pth):
-        self.img_list = data_pth.values.squeeze().tolist()
-
-        self.permutations = self.__retrive_permutations()
-
-        self.__image_transformer = transforms.Compose([
-            transforms.Resize(256, Image.BILINEAR),
-            transforms.CenterCrop(255)])
+    def __init__(self, data_pth, img_size=256, patch_size=150):
+#         self.img_list = list(data_pth.glob('*.tif'))
+        self.img_list = data_pth.values.reshape(-1).tolist()
+        self.permutations = list(permutations([0,1,2,3]))
+        self.__resize = transforms.Compose([
+            transforms.Resize(img_size, Image.BILINEAR),
+            transforms.CenterCrop(img_size)
+        ])
+        self.croplist = [[0, 0, patch_size, patch_size],
+                     [0, img_size-patch_size, patch_size, img_size],
+                     [img_size-patch_size, 0, img_size, patch_size],
+                     [img_size-patch_size, img_size-patch_size, img_size, img_size]]
         self.__augment_tile = transforms.Compose([
-            transforms.RandomCrop(64),
-            transforms.Resize((75, 75), Image.BILINEAR),
+#             transforms.RandomCrop(patch_size),
             transforms.ToTensor(),
         ])
     
@@ -23,18 +35,12 @@ class DataLoader(Dataset):
     
     def __getitem__(self, index):
         img_name = self.img_list[index]
-        img = Image.open(img_name).convert('L')
-        img = self.__image_transformer(img)
-
-        s = float(img.size[0]) / 3
-        a = s / 2
-        tiles = [None] * 9
-        for n in range(9):
-            i = n / 3
-            j = n % 3
-            c = [a * i * 2 + a, a * j * 2 + a]
-            c = np.array([c[1] - a, c[0] - a, c[1] + a + 1, c[0] + a + 1]).astype(int)
-            tile = img.crop(c.tolist())
+        img = Image.open(img_name).convert('RGB')
+        img = self.__resize(img)
+        tiles = [None]*4
+        
+        for n in range(4):
+            tile = img.crop(self.croplist[n])
             tile = self.__augment_tile(tile)
             # Normalize the patches indipendently to avoid low level features shortcut
             m, s = tile.mean(), tile.std()
@@ -43,12 +49,11 @@ class DataLoader(Dataset):
             tiles[n] = tile
 
         order = np.random.randint(len(self.permutations))
-        data = [tiles[self.permutations[order][t]] for t in range(9)]
+        data = [tiles[self.permutations[order][t]] for t in range(4)]
         data = torch.stack(data, 0)
         self.x = data
         self.y = int(order)
         return self.x, self.y
-
-    def __retrive_permutations(self):
-        all_perm = np.load('permutations_1000.npy')
-        return all_perm
+    
+# jigsaw_train = DataLoader(train_set)
+# jigsaw_valid = DataLoader(valid_set)
