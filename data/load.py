@@ -52,7 +52,7 @@ def get_patched_src(data_pth, hr_dir):
             .label_from_func(map_to_hr))
     return src
 
-def subsample(data, pct=0.1, seed=None):
+def subsample(data, pct=0.1, seed=42):
     """Takes a databunch as input and returns a mini-version of the dataset
     This is useful for debugging and rapid experimentation. 
     data -> a databunch object

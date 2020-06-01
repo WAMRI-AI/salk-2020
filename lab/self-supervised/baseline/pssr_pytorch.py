@@ -1,5 +1,5 @@
 # training param
-train_date = '5.4'
+train_date = '5.18'
 gpu_id = 2
 sample = False
 pretrained = True
@@ -50,7 +50,7 @@ def get_lrs(dataloader, max_lr=1e-3, min_lr=None, max_mom=0.95):
 
 def train(num_epochs):
     total_loss = 0.0
-    print_every = 10
+    print_every = 1000
     running_loss = 0.0
     model.cuda()
     for i in range(num_epochs):
@@ -66,7 +66,7 @@ def train(num_epochs):
 
             preds = model(x)  # [N,C]
 
-            loss = loss_function(y, preds)
+            loss = loss_function(target=y, input=preds)
             loss.backward()
             optimizer.step()
 
@@ -98,7 +98,7 @@ def validate(model):
         x, y = x.cuda(), y.cuda()
         preds = model(x)  # [N,C]
 
-        loss_batch = loss_function(y, preds).item()
+        loss_batch = loss_function(target=y, input=preds).item()
         loss_total += loss_batch * len(y)
         for pred, target in zip(preds, y):
             psnr_per_image = psnr(pred, target).item()
@@ -163,11 +163,11 @@ model = DynamicUnet(encoder, n_classes=config['y_channel'],
 flattened = flatten_model(model)
 ## 1a
 lrs, moms = get_lrs(train_dl, max_lr=1e-3)
-optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0])
+optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0], weight_decay=1e-3)
 train(1)
 ## 1b
 lrs, moms = get_lrs(train_dl, max_lr=1e-3, min_lr=1e-5)
-optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0])
+optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0], weight_decay=1e-3)
 train(1)
 ##save&export
 model_name = train_date + '_round_1'
@@ -188,12 +188,12 @@ model.load_state_dict(torch.load(save_pth))
 flattened = flatten_model(model)
 freeze()
 lrs, moms = get_lrs(train_dl, max_lr=1e-3)
-optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0])
+optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0], weight_decay=1e-3)
 train(3)
 ## 2b
 unfreeze()
 lrs, moms = get_lrs(train_dl, max_lr=1e-3, min_lr=1e-5)
-optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0])
+optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0], weight_decay=1e-3)
 train(3)
 ##save&export
 model_name = train_date + '_round_2'
@@ -214,12 +214,12 @@ model.load_state_dict(torch.load(save_pth))
 flattened = flatten_model(model)
 freeze()
 lrs, moms = get_lrs(train_dl, max_lr=1e-3)
-optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0])
+optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0], weight_decay=1e-3)
 train(3)
 ## 3b
 unfreeze()
 lrs, moms = get_lrs(train_dl, max_lr=1e-4, min_lr=1e-5)
-optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0])
+optimizer = torch.optim.SGD(model.parameters(), lr=lrs[0], momentum=moms[0], weight_decay=1e-3)
 train(3)
 ##save&export
 model_name = train_date + '_round_3'

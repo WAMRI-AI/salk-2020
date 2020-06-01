@@ -1,7 +1,7 @@
 sample = False
-gpu_id = 1
+gpu_id = 4
 critic_name = '5.3_fastai_80epoch.pkl'
-train_date = '5.15'
+train_date = '5.16'
 critic_pretrain = True
 expt_name = "mse_transfer"
 save_name = '_'.join([train_date, expt_name])
@@ -61,6 +61,7 @@ learn.freeze()
 learn.fit_one_cycle(1, lr, pct_start=.9)
 learn.unfreeze()
 learn.fit_one_cycle(1, slice(1e-5, lr), pct_start=.9)
+
 torch.save(learn.model.state_dict(), model_pth/(save_name+'_1.pkl'))
 
 
@@ -68,7 +69,7 @@ bs_2 = 16
 size_2 = 256
 db = data_func(bs=bs_2, size=size_2, max_zoom=3.)
 learn = unet_learner(db, arch, wd=wd,
-                         loss_func=feat_loss,
+                         loss_func=F.mse_loss,
                          metrics=superres_metrics,
                          blur=True,
                          norm_type=NormType.Weight,
@@ -84,12 +85,12 @@ bs_3 = 8
 size_3 = 512
 db = data_func(bs=bs_3, size=size_3, max_zoom=2.)
 learn = unet_learner(db, arch, wd=wd,
-                         loss_func=feat_loss,
+                         loss_func=F.mse_loss,
                          metrics=superres_metrics,
                          blur=True,
                          norm_type=NormType.Weight,
                          model_dir=model_pth)
-learn.model.load_state_dict(torch.load(model_pth/save_name + '_2.pkl'))
+learn.model.load_state_dict(torch.load(model_pth/(save_name + '_2.pkl')))
 learn.freeze()
 learn.fit_one_cycle(3, lr, pct_start=.9)
 learn.unfreeze()
