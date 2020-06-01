@@ -1,9 +1,9 @@
-gpu_id = 4
-train_date = '5.20'
+gpu_id = 3
+train_date = '5.21'
 
-critic_name = '5.3_fastai_80epoch.pkl'
+critic_name = '5.21_critic_toddler_best.pkl'
 critic_transfer = True
-expt_name = 'inpaint_transfer'
+expt_name = 'inpaint_transfer_toddler'
 
 sample = True
 expt_name += '_sampled'

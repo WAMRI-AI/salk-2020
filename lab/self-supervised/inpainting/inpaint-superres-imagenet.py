@@ -1,9 +1,9 @@
-gpu_id = 5
-train_date = '5.20'
+gpu_id = 2
+train_date = '5.21'
 
 critic_name = '5.3_fastai_80epoch.pkl'
 critic_transfer = False
-expt_name = "inpaint_imagenet"
+expt_name = "inpaint_imagenet_toddler"
 
 sample = True
 expt_name += '_sampled'
@@ -43,8 +43,7 @@ critic = unet_learner(data, critic_arch, wd=wd,
                          loss_func=F.mse_loss,
                          metrics=superres_metrics,
                          blur=True,
-                         norm_type=NormType.Weight,
-                         model_dir=model_pth)
+                         norm_type=NormType.Weight)
 gc.collect()
 critic.model.load_state_dict(torch.load(model_pth/critic_name))
 encoder = critic.model.eval()[0]
